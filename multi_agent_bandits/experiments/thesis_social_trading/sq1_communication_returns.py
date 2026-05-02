@@ -1,17 +1,19 @@
 import os
 
 from multi_agent_bandits.experiments.thesis_social_trading.common import (
+    DEFAULT_RESULTS_ROOT,
     SUMMARY_METRICS,
     aggregate_rows,
     expand_grid,
     run_scenarios,
     write_csv,
 )
+from multi_agent_bandits.experiments.thesis_social_trading.plotting import plot_sq1_summary
 
 
 def main(steps=400, seeds=None, save_dir=None):
     seeds = list(seeds or [1, 7, 21, 42, 84])
-    output_root = save_dir or "results/thesis_social_trading"
+    output_root = save_dir or DEFAULT_RESULTS_ROOT
 
     scenario_rows = []
     scenario_rows.append(
@@ -78,6 +80,7 @@ def main(steps=400, seeds=None, save_dir=None):
         os.path.join(output_dir, "sq1_summary_by_condition.csv"),
         summary_aggregate,
     )
+    plot_sq1_summary(output_dir, summary_aggregate)
 
 
 if __name__ == "__main__":

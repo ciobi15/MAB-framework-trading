@@ -10,6 +10,9 @@ from multi_agent_bandits.core.reward_sharing import linear_share
 from multi_agent_bandits.social_trading.config_social_trading import SocialTradingConfig
 from multi_agent_bandits.social_trading.sweep_runner import SweepRunner
 
+PACKAGE_DIR = os.path.dirname(__file__)
+DEFAULT_RESULTS_ROOT = os.path.join(PACKAGE_DIR, "results", "thesis_social_trading")
+
 
 SUMMARY_METRICS = [
     "average_cumulative_return",

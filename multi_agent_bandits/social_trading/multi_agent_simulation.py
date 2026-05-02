@@ -99,23 +99,24 @@ class SocialTradingSimulation:
 
     def _messages_for_agent(self, agent_idx, current_messages=None):
         current_messages = current_messages or []
+        visible_messages = self.previous_messages + current_messages
+        return self._visible_messages_from_pool(agent_idx, visible_messages)
 
+    def _visible_messages_from_pool(self, agent_idx, messages):
         if self.config.communication_structure == "none":
             return []
-
-        visible_messages = self.previous_messages + current_messages
 
         if self.config.communication_structure == "global":
             return [
                 message
-                for message in visible_messages
+                for message in messages
                 if message["sender_id"] != agent_idx
             ]
 
         local_neighbors = set(self.network.neighbors(agent_idx))
         return [
             message
-            for message in visible_messages
+            for message in messages
             if message["sender_id"] in local_neighbors
         ]
 
@@ -241,16 +242,37 @@ class SocialTradingSimulation:
                 agent.update(reward, chosen_arm=choice)
                 self.cumulative_rewards[agent_idx] += reward
 
-            reputations = self.reputation_model.update(
-                observed_messages=observed_messages,
-                rewards=rewards,
-                choices=choices,
-            )
-            self.previous_messages = self._build_outcome_messages(
+            outcome_messages = self._build_outcome_messages(
                 decision_messages,
                 choices,
                 rewards,
             )
+
+            reputation_messages = []
+            for agent_idx, messages in enumerate(observed_messages):
+                # Messages observed before choosing can be judged once the
+                # current rewards are known. This lets an outcome message like
+                # "arm 2 paid 10" lose trust if the receiver follows it and
+                # receives a much smaller reward.
+                observed_before_choice = [
+                    dict(message)
+                    for message in messages
+                ]
+                visible_outcomes = [
+                    dict(message)
+                    for message in self._visible_messages_from_pool(
+                        agent_idx,
+                        outcome_messages,
+                    )
+                ]
+                reputation_messages.append(observed_before_choice + visible_outcomes)
+
+            reputations = self.reputation_model.update(
+                observed_messages=reputation_messages,
+                rewards=rewards,
+                choices=choices,
+            )
+            self.previous_messages = outcome_messages
 
             self.choices_log.append(list(choices))
             self.rewards_log.append(list(rewards))

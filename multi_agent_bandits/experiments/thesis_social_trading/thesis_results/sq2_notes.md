@@ -1,0 +1,22 @@
+# SQ2 Notes
+
+- Reputation changes the distribution of arm choices differently in global and local communication settings.
+- In the global setting, reputation slightly increases diversification rather than herding.
+- Mean choice entropy rises from `1.747` to `1.760`.
+- Mean distinct arms chosen rises from `3.603` to `3.634`.
+- Mean most-popular-arm share falls slightly from `0.388` to `0.386`.
+- In the same global setting, performance also improves.
+- Average cumulative return rises from `246.04` to `248.84`.
+- Expected regret falls from `151.69` to `129.26`.
+- In the local ring-lattice setting, the pattern reverses.
+- Mean choice entropy falls from `1.286` to `1.255`.
+- Mean most-popular-arm share rises from `0.558` to `0.569`.
+- Mean distinct arms chosen falls from `2.831` to `2.781`.
+- In the local setting, reputation also slightly worsens performance.
+- Average cumulative return falls from `198.67` to `196.11`.
+- Expected regret rises from `530.68` to `551.09`.
+- Interpretation:
+- In a global information environment, reputation helps agents filter signals without collapsing onto one arm.
+- In a local information environment, reputation appears to reinforce clustered trust and pushes the system toward stronger herding.
+- A thesis sentence you can use:
+- SQ2 indicates that reputation does not have a uniform coordination effect; instead, it promotes diversification under global communication but intensifies herding when information is already locally constrained.
