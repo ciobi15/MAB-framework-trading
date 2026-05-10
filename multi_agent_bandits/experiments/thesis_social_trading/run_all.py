@@ -5,16 +5,12 @@ from multi_agent_bandits.experiments.thesis_social_trading.sq1_communication_ret
 from multi_agent_bandits.experiments.thesis_social_trading.sq2_reputation_coordination import (
     main as run_sq2,
 )
-from multi_agent_bandits.experiments.thesis_social_trading.sq3_tradeoff import (
-    main as run_sq3,
-)
 
 
-def main(steps=400, seeds=None, save_dir=None):
+def main(steps=4000, seeds=None, save_dir=None):
     save_dir = save_dir or DEFAULT_RESULTS_ROOT
     run_sq1(steps=steps, seeds=seeds, save_dir=save_dir)
     run_sq2(steps=steps, seeds=seeds, save_dir=save_dir)
-    run_sq3(steps=steps, seeds=seeds, save_dir=save_dir)
 
 
 if __name__ == "__main__":

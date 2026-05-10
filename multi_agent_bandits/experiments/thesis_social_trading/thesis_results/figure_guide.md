@@ -1,20 +1,47 @@
-# Figure Guide
+# Thesis Figure Guide
 
-- `plots/sq1/sq1_returns_vs_noise.png`
-- Best use: main SQ1 figure showing how average cumulative returns respond to communication noise under global and local structures.
-- `plots/sq1/sq1_local_heatmaps.png`
-- Best use: supporting SQ1 figure for showing how local topology changes both returns and spread across agents.
-- `plots/sq2/sq2_coordination_trajectories.png`
-- Best use: main SQ2 figure because it shows the time path of herding and diversification metrics.
-- `plots/sq2/sq2_herding_diversification_map.png`
-- Best use: compact end-state summary when comparing no-reputation vs reputation conditions.
-- `plots/sq3/sq3_pareto_frontier.png`
-- Best use: main SQ3 figure because it visualizes the performance-inequality frontier directly.
-- `plots/sq3/sq3_tradeoff_ranking.png`
-- Best use: supporting SQ3 figure when you want a simple ranked comparison across communication and reputation conditions.
-- Suggested caption details to include:
-- `8` agents
-- `400` timesteps
-- `5` seeds
-- UCB-based decision rule with social influence where applicable
-- Means across runs, with spread shown either as standard deviation bands or as the inequality measure in the figure itself
+Generated SQ1 candidates:
+
+- `sq1_returns_vs_noise.png`
+- `sq1_local_heatmaps.png`
+- `sq1_expected_regret_vs_noise.png`
+- `sq1_return_spread_vs_noise.png`
+- `sq1_gini_vs_noise.png`
+- `sq1_entropy_vs_noise.png`
+- `sq1_herding_vs_noise.png`
+- `sq1_distinct_arms_vs_noise.png`
+- `sq1_return_regret_tradeoff.png`
+- `sq1_performance_inequality_tradeoff.png`
+- `sq1_ranked_returns.png`
+- `sq1_ranked_regret.png`
+- `sq1_noise_penalty_by_topology.png`
+
+Generated SQ2 candidates:
+
+- `sq2_coordination_trajectories.png`
+- `sq2_herding_diversification_map.png`
+- `sq2_group_reward_trajectories.png`
+- `sq2_choice_entropy_trajectories.png`
+- `sq2_herding_trajectories.png`
+- `sq2_distinct_arms_trajectories.png`
+- `sq2_group_reward_clean_vs_malicious.png`
+- `sq2_choice_entropy_clean_vs_malicious.png`
+- `sq2_average_cumulative_return_bars.png`
+- `sq2_expected_regret_bars.png`
+- `sq2_gini_bars.png`
+- `sq2_final_entropy_bars.png`
+- `sq2_final_herding_bars.png`
+- `sq2_mean_lie_rate_bars.png`
+- `sq2_final_reputation_bars.png`
+- `sq2_malicious_return_penalty.png`
+- `sq2_reputation_return_gain.png`
+
+Recommended first-pass thesis figures:
+
+- SQ1: returns versus noise.
+- SQ1: local heatmaps.
+- SQ1: performance-inequality tradeoff.
+- SQ2: coordination trajectories.
+- SQ2: group reward clean versus malicious.
+- SQ2: malicious return penalty.
+- SQ2: reputation return gain.

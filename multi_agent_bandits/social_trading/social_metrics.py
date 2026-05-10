@@ -43,6 +43,10 @@ def expected_group_reward(choice_profile, arm_means, collision_policy):
 
 
 def oracle_expected_reward_per_step(arm_means, n_agents, collision_policy):
+    if getattr(collision_policy, "__name__", "") == "linear_share":
+        n_distinct_choices = min(n_agents, len(arm_means))
+        return sum(sorted(arm_means, reverse=True)[:n_distinct_choices])
+
     search_space = len(arm_means) ** n_agents
     if search_space > 100000:
         return None

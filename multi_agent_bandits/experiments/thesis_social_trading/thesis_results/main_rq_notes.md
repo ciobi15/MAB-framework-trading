@@ -1,13 +1,13 @@
 # Main RQ Notes
 
-- Communication clearly shapes collective investor performance in the current runs.
-- Relative to pure UCB, global communication without reputation raises average cumulative return from `75.35` to `246.04` and reduces expected regret from `1517.22` to `151.69`.
-- Adding reputation on top of global communication improves performance further, increasing average cumulative return to `248.84` and lowering expected regret to `129.26`.
-- Communication also changes behavioral coordination.
-- The global settings are associated with relatively low concentration on a single arm, with mean most-popular-arm share around `0.386-0.388` and mean choice entropy around `1.75`.
-- Local ring-lattice communication produces much stronger concentration, with mean most-popular-arm share around `0.558-0.569` and lower mean choice entropy around `1.26-1.29`.
-- The effect of reputation depends on the communication regime.
-- Under global communication, reputation improves performance slightly and maintains diversification.
-- Under local ring-lattice communication, reputation reduces average cumulative return from `198.67` to `196.11` and pushes the system toward more herding.
+- The final thesis runs use `8` agents, `12` arms, `4000` timesteps, and seeds `1, 7, 21, 42, 84`.
+- Communication structure clearly shapes collective investor performance.
+- In SQ1, global and fully connected local communication produce the highest returns, with clean global/fully connected conditions reaching about `3056.10` average cumulative return.
+- High communication noise reduces performance; global noise `0.6` falls below the clean global condition.
+- SQ2 shows that malicious agents reduce performance in both global and local communication.
+- In global malicious communication, reputation improves average cumulative return from `2787.33` to `2832.76`.
+- In local malicious communication, reputation improves average cumulative return from `2300.52` to `2446.28`.
+- Reputation also improves diversification in both malicious settings by increasing entropy and reducing the most-popular-arm share.
+- Under clean local communication, reputation is not automatically beneficial and lowers average cumulative return from `2851.82` to `2810.73`.
 - A compact thesis sentence you can use:
-- In the multi-agent retail social trading model, communication substantially improves collective performance relative to isolated learning, but the benefits depend on the communication structure, and adaptive trust is most useful under global rather than strongly local information flow.
+- In the multi-agent retail social trading model, communication improves collective learning when information can spread broadly, while reputation is most valuable as a robustness mechanism when social information can be deceptive.

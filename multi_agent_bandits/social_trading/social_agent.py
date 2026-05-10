@@ -77,7 +77,8 @@ class SocialTradingAgent(Agent):
 
         UCB balances exploitation and exploration: it prefers arms with high
         estimated payoff, but adds an exploration bonus to arms that have been
-        tried less often.
+        tried less often. Ties are broken randomly so agents do not all favor
+        the lowest-index arm when scores are equal.
         """
         social_signal, observed_counts = self._normalize_social_inputs(
             social_signal=social_signal,
@@ -85,37 +86,34 @@ class SocialTradingAgent(Agent):
         )
         self.total_steps += 1
 
-        # Untried arms do not yet have a count for the usual UCB denominator,
-        # so they receive a shared warm-start bonus instead.
-        warm_start_bonus = math.sqrt(
-            self.ucb_exploration * math.log(self.total_steps + 1)
-        )
+        # Try each arm at least once. Choosing randomly among untried arms avoids
+        # deterministic arm-order bias and helps break symmetry between agents.
+        unpulled = [
+            arm_idx for arm_idx in range(self.n_arms) if self.counts[arm_idx] == 0
+        ]
+        if unpulled:
+            self.last_arm = random.choice(unpulled)
+            return self.last_arm
 
         scores = []
         for arm_idx in range(self.n_arms):
-            if self.counts[arm_idx] == 0:
-                score = self.estimate_payoff(
-                    arm_idx,
-                    social_signal=social_signal,
-                    observed_counts=observed_counts,
-                )
-                score += warm_start_bonus
-            else:
-                bonus = math.sqrt(
-                    (self.ucb_exploration * math.log(self.total_steps + 1))
-                    / self.counts[arm_idx]
-                )
-                score = self.estimate_payoff(
-                    arm_idx,
-                    social_signal=social_signal,
-                    observed_counts=observed_counts,
-                )
-                score += bonus
+            bonus = math.sqrt(
+                (self.ucb_exploration * math.log(self.total_steps + 1))
+                / self.counts[arm_idx]
+            )
+            score = self.estimate_payoff(
+                arm_idx,
+                social_signal=social_signal,
+                observed_counts=observed_counts,
+            )
+            score += bonus
             scores.append(score)
 
-        # Deterministically pick the best-scoring arm and remember it so update()
-        # can assign the observed reward to the same arm.
-        self.last_arm = max(range(self.n_arms), key=lambda arm_idx: scores[arm_idx])
+        # Shuffle before max so exact ties are broken randomly rather than by
+        # arm index.
+        indices = list(range(self.n_arms))
+        random.shuffle(indices)
+        self.last_arm = max(indices, key=lambda arm_idx: scores[arm_idx])
         return self.last_arm
 
     def generate_signal(self, arm_idx, social_signal=None, observed_counts=None):

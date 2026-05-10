@@ -106,34 +106,57 @@ class SweepRunner:
         summary_rows = []
         timestep_rows = []
         seen = set()
+        agent_detail_path = os.path.join(
+            self.output_dir,
+            "sweep_agent_timestep_details.csv",
+        )
+        agent_detail_file = open(agent_detail_path, "w", newline="")
+        agent_detail_writer = None
 
-        for parameter_row in self._parameter_rows():
-            signature = tuple(sorted(parameter_row.items()))
-            if signature in seen:
-                continue
-            seen.add(signature)
+        try:
+            for parameter_row in self._parameter_rows():
+                signature = tuple(sorted(parameter_row.items()))
+                if signature in seen:
+                    continue
+                seen.add(signature)
 
-            for seed in self.seeds:
-                config = copy.deepcopy(self.base_config)
-                config.seed = seed
-                config.save_dir = None
+                for seed in self.seeds:
+                    config = copy.deepcopy(self.base_config)
+                    config.seed = seed
+                    config.save_dir = None
 
-                for name, value in parameter_row.items():
-                    setattr(config, name, value)
+                    for name, value in parameter_row.items():
+                        setattr(config, name, value)
 
-                simulation = SocialTradingSimulation(config)
-                result = simulation.run(save_outputs=False, save_plots=False)
+                    simulation = SocialTradingSimulation(config)
+                    result = simulation.run(save_outputs=False, save_plots=False)
 
-                summary_row = dict(parameter_row)
-                summary_row["seed"] = seed
-                summary_row.update(result.summary_metrics)
-                summary_rows.append(summary_row)
+                    summary_row = dict(parameter_row)
+                    summary_row["seed"] = seed
+                    summary_row.update(result.summary_metrics)
+                    summary_rows.append(summary_row)
 
-                for timestep_metric in result.timestep_metrics:
-                    row = dict(parameter_row)
-                    row["seed"] = seed
-                    row.update(timestep_metric)
-                    timestep_rows.append(row)
+                    for timestep_metric in result.timestep_metrics:
+                        row = dict(parameter_row)
+                        row["seed"] = seed
+                        row.update(timestep_metric)
+                        timestep_rows.append(row)
+
+                    for detail_row in self._agent_timestep_detail_rows(
+                        parameter_row,
+                        seed,
+                        simulation,
+                        result,
+                    ):
+                        if agent_detail_writer is None:
+                            agent_detail_writer = csv.DictWriter(
+                                agent_detail_file,
+                                fieldnames=list(detail_row.keys()),
+                            )
+                            agent_detail_writer.writeheader()
+                        agent_detail_writer.writerow(detail_row)
+        finally:
+            agent_detail_file.close()
 
         self._write_summary(summary_rows)
         self._write_timestep_metrics(timestep_rows)
@@ -142,6 +165,43 @@ class SweepRunner:
             plot_sweep_summary(summary_rows, self.output_dir)
 
         return summary_rows, timestep_rows
+
+    def _agent_timestep_detail_rows(self, parameter_row, seed, simulation, result):
+        cumulative_rewards = [0.0] * result.config.n_agents
+        malicious_agents = {
+            agent_idx
+            for agent_idx, agent in enumerate(simulation.agents)
+            if agent.lying_probability > 0.0
+        }
+
+        for timestep_idx, (choices, rewards, reputations, lies) in enumerate(
+            zip(
+                result.choices_log,
+                result.rewards_log,
+                result.reputation_log,
+                result.lying_log,
+            ),
+            start=1,
+        ):
+            for agent_idx, (choice, reward, reputation, lied) in enumerate(
+                zip(choices, rewards, reputations, lies)
+            ):
+                cumulative_rewards[agent_idx] += reward
+                row = dict(parameter_row)
+                row.update(
+                    {
+                        "seed": seed,
+                        "timestep": timestep_idx,
+                        "agent_id": agent_idx,
+                        "agent_is_malicious": agent_idx in malicious_agents,
+                        "choice": choice,
+                        "reward": reward,
+                        "cumulative_reward": cumulative_rewards[agent_idx],
+                        "reputation": reputation,
+                        "lied": lied,
+                    }
+                )
+                yield row
 
     def _write_summary(self, summary_rows):
         if not summary_rows:

@@ -13,6 +13,8 @@ from multi_agent_bandits.social_trading.social_network import SocialNetwork
 
 @dataclass
 class SocialSimulationResult:
+    """Container for everything produced by one simulation run."""
+
     config: SocialTradingConfig
     choices_log: list
     rewards_log: list
@@ -29,23 +31,37 @@ class SocialTradingSimulation:
     """
     Social-trading simulation that extends the base bandit framework without
     changing the existing core environment.
+
+    The simulation coordinates three things:
+    1. agents choosing arms with UCB,
+    2. messages shared between agents,
+    3. reputation/trust updates based on how useful those messages were.
     """
 
     def __init__(self, config, agents=None):
         self.config = config
         self.config.validate()
 
+        # A fixed seed makes experiment runs reproducible.
         if self.config.seed is not None:
             random.seed(self.config.seed)
 
         self.agents = agents or self._build_default_agents()
+
+        # ReputationModel stores the pairwise trust matrix. If reputation is
+        # disabled, it still returns neutral trust weights of 1.0.
         self.reputation_model = ReputationModel(
             self.config.n_agents,
             enabled=self.config.use_reputation,
             strength=self.config.reputation_strength,
         )
         self.network = self._build_network()
+
+        # Outcome messages from the previous timestep are stored here so agents
+        # can use last round's results when choosing in the next round.
         self.previous_messages = []
+
+        # Logs are used later for metrics, plots, and CSV outputs.
         self.choices_log = []
         self.rewards_log = []
         self.reputation_log = []
@@ -59,6 +75,9 @@ class SocialTradingSimulation:
     def _build_default_agents(self):
         agents = []
         communication_is_possible = self.config.communication_structure != "none"
+
+        # Malicious agents only matter when communication exists. If agents
+        # cannot send messages, lying would have no effect on other agents.
         malicious_ratio = (
             self.config.malicious_agent_ratio if communication_is_possible else 0.0
         )
@@ -66,6 +85,8 @@ class SocialTradingSimulation:
         malicious_agents = set(random.sample(range(self.config.n_agents), malicious_count))
 
         for agent_idx in range(self.config.n_agents):
+            # Honest agents have lying_probability = 0 and lie_magnitude = 0.
+            # Malicious agents use the configured lying parameters.
             agents.append(
                 SocialTradingAgent(
                     self.config.n_arms,
@@ -86,6 +107,8 @@ class SocialTradingSimulation:
         return agents
 
     def _build_network(self):
+        # A network is only needed for local communication. Global communication
+        # directly exposes messages to all agents, and "none" exposes no messages.
         if self.config.communication_structure != "local":
             return None
 
@@ -99,13 +122,19 @@ class SocialTradingSimulation:
 
     def _messages_for_agent(self, agent_idx, current_messages=None):
         current_messages = current_messages or []
+
+        # Before choosing, an agent can observe outcome messages from the
+        # previous timestep plus preview messages from agents who already chose
+        # in the current timestep.
         visible_messages = self.previous_messages + current_messages
         return self._visible_messages_from_pool(agent_idx, visible_messages)
 
     def _visible_messages_from_pool(self, agent_idx, messages):
+        """Filter a message pool according to the communication structure."""
         if self.config.communication_structure == "none":
             return []
 
+        # Global communication: every other agent's messages are visible.
         if self.config.communication_structure == "global":
             return [
                 message
@@ -113,6 +142,7 @@ class SocialTradingSimulation:
                 if message["sender_id"] != agent_idx
             ]
 
+        # Local communication: only messages from network neighbors are visible.
         local_neighbors = set(self.network.neighbors(agent_idx))
         return [
             message
@@ -121,21 +151,33 @@ class SocialTradingSimulation:
         ]
 
     def _aggregate_social_signal(self, receiver_idx, messages):
+        """
+        Turn visible messages into one social value per arm.
+
+        Messages are weighted by the receiver's trust in the sender. This is
+        where reputation affects the later arm choice.
+        """
         signal = [0.0] * self.config.n_arms
         weights = [0.0] * self.config.n_arms
         observed_counts = [0] * self.config.n_arms
 
         for message in messages:
             arm_idx = message["arm"]
+
+            # Pairwise trust becomes the influence weight for this message.
             weight = self.reputation_model.influence_weight(
                 receiver_idx,
                 message["sender_id"],
             )
             signal[arm_idx] += weight * message["reported_value"]
             weights[arm_idx] += weight
+
+            # Only preview messages count as current crowding, because they say
+            # who is choosing an arm right now.
             if message.get("message_type") == "preview":
                 observed_counts[arm_idx] += 1
 
+        # Convert weighted sums into weighted averages for each arm.
         for arm_idx in range(self.config.n_arms):
             if weights[arm_idx] > 0:
                 signal[arm_idx] /= weights[arm_idx]
@@ -146,6 +188,12 @@ class SocialTradingSimulation:
         return self.config.arms[arm_idx].sample()
 
     def _resolve_rewards(self, choices):
+        """
+        Sample rewards after all agents have chosen.
+
+        If multiple agents choose the same arm, the configured collision policy
+        decides how the sampled reward is shared between them.
+        """
         collisions = {}
         for agent_idx, arm_idx in enumerate(choices):
             collisions.setdefault(arm_idx, []).append(agent_idx)
@@ -169,6 +217,13 @@ class SocialTradingSimulation:
         social_signal,
         observed_counts,
     ):
+        """
+        Build a preview message after an agent chooses but before reward is known.
+
+        Preview messages communicate the chosen arm and the sender's current
+        estimated value for that arm. Later agents in the same timestep may see
+        this message before making their own choice.
+        """
         signal = agent.generate_signal(
             choice,
             social_signal=social_signal,
@@ -185,9 +240,20 @@ class SocialTradingSimulation:
         }
 
     def _build_outcome_messages(self, decision_messages, choices, rewards):
+        """
+        Build outcome messages after rewards are known.
+
+        Outcome messages communicate what reward the sender reports receiving.
+        These messages update reputation and become previous_messages for the
+        next timestep.
+        """
         messages = []
         for agent_idx, (arm_idx, reward) in enumerate(zip(choices, rewards)):
             decision_message = decision_messages[agent_idx]
+
+            # The same distortion chosen for the preview message is carried into
+            # the outcome report, so a lying agent is consistently misleading in
+            # that timestep.
             reported_value = reward + decision_message["distortion"]
             if self.config.communication_noise > 0:
                 reported_value += random.gauss(0.0, self.config.communication_noise)
@@ -206,15 +272,22 @@ class SocialTradingSimulation:
 
     def run(self, save_outputs=True, save_plots=False):
         for timestep in range(1, self.config.timesteps + 1):
+            # Per-timestep state. decision_messages are preview messages created
+            # during this timestep; observed_messages records what each receiver
+            # saw before choosing, so those messages can later update reputation.
             choices = []
             decision_messages = []
             observed_messages = []
             for agent_idx, agent in enumerate(self.agents):
+                # Collect the messages visible to this agent before it chooses.
                 messages = self._messages_for_agent(
                     agent_idx,
                     current_messages=decision_messages,
                 )
                 observed_messages.append([dict(message) for message in messages])
+
+                # Convert messages into social_signal and crowding counts, then
+                # let the agent combine those with its own UCB estimates.
                 social_signal, observed_counts = self._aggregate_social_signal(
                     agent_idx,
                     messages,
@@ -224,6 +297,9 @@ class SocialTradingSimulation:
                     observed_counts=observed_counts,
                 )
                 choices.append(choice)
+
+                # Once the agent has chosen, it broadcasts a preview message.
+                # Agents later in this same timestep may observe it.
                 decision_messages.append(
                     self._build_preview_message(
                         agent_idx,
@@ -234,14 +310,17 @@ class SocialTradingSimulation:
                     )
                 )
 
+            # Rewards are only sampled after every agent has committed to an arm.
             rewards = self._resolve_rewards(choices)
 
+            # Each agent updates its private bandit estimate using its own reward.
             for agent_idx, (agent, choice, reward) in enumerate(
                 zip(self.agents, choices, rewards)
             ):
                 agent.update(reward, chosen_arm=choice)
                 self.cumulative_rewards[agent_idx] += reward
 
+            # Outcome messages report the rewards after they are known.
             outcome_messages = self._build_outcome_messages(
                 decision_messages,
                 choices,
@@ -265,21 +344,34 @@ class SocialTradingSimulation:
                         outcome_messages,
                     )
                 ]
+
+                # Reputation receives both:
+                # - messages the agent used before choosing,
+                # - visible outcome messages after rewards were known.
+                # This makes trust reflect whether communicated information was
+                # useful for the receiver's actual experience.
                 reputation_messages.append(observed_before_choice + visible_outcomes)
 
+            # Update the pairwise trust matrix and record one overall reputation
+            # score per agent for analysis.
             reputations = self.reputation_model.update(
                 observed_messages=reputation_messages,
                 rewards=rewards,
                 choices=choices,
             )
+
+            # Current outcome messages become the previous messages observed in
+            # the next timestep.
             self.previous_messages = outcome_messages
 
+            # Save timestep-level logs.
             self.choices_log.append(list(choices))
             self.rewards_log.append(list(rewards))
             self.reputation_log.append(list(reputations))
             self.pairwise_trust_log.append(self.reputation_model.current_pairwise_trust())
             self.lying_log.append([int(message["lied"]) for message in decision_messages])
 
+        # Convert logs into summary and timestep metrics used by the experiments.
         arm_means = [arm.mean for arm in self.config.arms]
         summary_metrics, timestep_metrics = compute_summary_metrics(
             self.choices_log,
@@ -288,6 +380,8 @@ class SocialTradingSimulation:
             arm_means,
             self.config.collision_policy,
         )
+
+        # Extra social-trading metrics that are not part of the base bandit logs.
         summary_metrics["mean_lie_rate"] = (
             sum(sum(row) for row in self.lying_log)
             / (self.config.n_agents * self.config.timesteps)

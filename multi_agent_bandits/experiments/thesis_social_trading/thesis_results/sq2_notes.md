@@ -1,22 +1,29 @@
 # SQ2 Notes
 
-- Reputation changes the distribution of arm choices differently in global and local communication settings.
-- In the global setting, reputation slightly increases diversification rather than herding.
-- Mean choice entropy rises from `1.747` to `1.760`.
-- Mean distinct arms chosen rises from `3.603` to `3.634`.
-- Mean most-popular-arm share falls slightly from `0.388` to `0.386`.
-- In the same global setting, performance also improves.
-- Average cumulative return rises from `246.04` to `248.84`.
-- Expected regret falls from `151.69` to `129.26`.
-- In the local ring-lattice setting, the pattern reverses.
-- Mean choice entropy falls from `1.286` to `1.255`.
-- Mean most-popular-arm share rises from `0.558` to `0.569`.
-- Mean distinct arms chosen falls from `2.831` to `2.781`.
-- In the local setting, reputation also slightly worsens performance.
-- Average cumulative return falls from `198.67` to `196.11`.
-- Expected regret rises from `530.68` to `551.09`.
+- SQ2 now uses `8` agents, `12` arms, `4000` timesteps, and seeds `1, 7, 21, 42, 84`.
+- The malicious setting uses `25%` malicious agents, lying probability `0.7`, and lie magnitude `1.0`.
+- Under clean global communication, average cumulative return is similar with and without reputation:
+- no reputation: `3056.10`
+- reputation: `3054.43`
+- Under malicious global communication, reputation improves performance relative to no reputation:
+- no reputation: `2787.33`
+- reputation: `2832.76`
+- Global reputation also improves choice diversity in the malicious condition:
+- choice entropy rises from `1.706` to `1.725`
+- distinct arms chosen rises from `3.530` to `3.576`
+- most popular arm share falls from `0.403` to `0.398`
+- Under clean local ring communication, reputation lowers average cumulative return:
+- no reputation: `2851.82`
+- reputation: `2810.73`
+- Under malicious local ring communication, reputation improves performance:
+- no reputation: `2300.52`
+- reputation: `2446.28`
+- Local malicious reputation also reduces concentration:
+- choice entropy rises from `1.351` to `1.406`
+- distinct arms chosen rises from `3.046` to `3.179`
+- most popular arm share falls from `0.556` to `0.544`
 - Interpretation:
-- In a global information environment, reputation helps agents filter signals without collapsing onto one arm.
-- In a local information environment, reputation appears to reinforce clustered trust and pushes the system toward stronger herding.
+- Reputation does not add much under clean global communication, where the information environment is already broad.
+- Reputation becomes more valuable in malicious settings, especially under local communication where deception otherwise creates stronger concentration and lower returns.
 - A thesis sentence you can use:
-- SQ2 indicates that reputation does not have a uniform coordination effect; instead, it promotes diversification under global communication but intensifies herding when information is already locally constrained.
+- SQ2 suggests that reputation is most useful as a robustness mechanism under deceptive communication; it only slightly changes clean global performance, but it improves both returns and diversification when malicious agents are present.
