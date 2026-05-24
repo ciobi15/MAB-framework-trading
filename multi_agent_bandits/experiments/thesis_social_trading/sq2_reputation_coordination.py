@@ -1,6 +1,7 @@
 import os
 
 from multi_agent_bandits.experiments.thesis_social_trading.common import (
+    DEFAULT_RESULTS_ROOT,
     SUMMARY_METRICS,
     TIMESTEP_METRICS,
     aggregate_rows,
@@ -8,56 +9,48 @@ from multi_agent_bandits.experiments.thesis_social_trading.common import (
     run_scenarios,
     write_csv,
 )
+from multi_agent_bandits.experiments.thesis_social_trading.plotting import plot_sq2_summary
 
 
-def main(steps=400, seeds=None, save_dir=None):
+def main(steps=4000, seeds=None, save_dir=None):
+    # SQ2 asks whether reputation changes coordination dynamics: do agents herd
+    # onto the same arm, or diversify across multiple arms over time?
     seeds = list(seeds or [1, 7, 21, 42, 84])
-    output_root = save_dir or "results/thesis_social_trading"
+    output_root = save_dir or DEFAULT_RESULTS_ROOT
 
-    scenario_rows = [
-        {
-            "scenario": "sq2_global_no_reputation",
-            "communication_structure": "global",
-            "network_topology": "fully_connected",
-            "communication_noise": 0.0,
-            "use_reputation": False,
-            "malicious_agent_ratio": 0.0,
-            "lying_probability": 0.0,
-            "lie_magnitude": 0.0,
-        },
-        {
-            "scenario": "sq2_global_reputation",
-            "communication_structure": "global",
-            "network_topology": "fully_connected",
-            "communication_noise": 0.0,
-            "use_reputation": True,
-            "reputation_strength": 1.0,
-            "malicious_agent_ratio": 0.0,
-            "lying_probability": 0.0,
-            "lie_magnitude": 0.0,
-        },
-        {
-            "scenario": "sq2_local_no_reputation",
-            "communication_structure": "local",
-            "network_topology": "ring_lattice",
-            "communication_noise": 0.0,
-            "use_reputation": False,
-            "malicious_agent_ratio": 0.0,
-            "lying_probability": 0.0,
-            "lie_magnitude": 0.0,
-        },
-        {
-            "scenario": "sq2_local_reputation",
-            "communication_structure": "local",
-            "network_topology": "ring_lattice",
-            "communication_noise": 0.0,
-            "use_reputation": True,
-            "reputation_strength": 1.0,
-            "malicious_agent_ratio": 0.0,
-            "lying_probability": 0.0,
-            "lie_magnitude": 0.0,
-        },
-    ]
+    # The scenarios compare the same communication structure with reputation
+    # turned off versus on, both in clean communication and in a malicious-agent
+    # setting. This keeps SQ2 focused on coordination while adding robustness.
+    scenario_rows = []
+    for communication_structure, network_topology in [
+        ("global", "fully_connected"),
+        ("local", "ring_lattice"),
+    ]:
+        for malicious_agent_ratio, lying_probability, lie_magnitude, deception_label in [
+            (0.0, 0.0, 0.0, "clean"),
+            (0.25, 0.7, 1.0, "malicious"),
+        ]:
+            for use_reputation, reputation_label in [
+                (False, "no_reputation"),
+                (True, "reputation"),
+            ]:
+                scenario = (
+                    f"sq2_{communication_structure}_{deception_label}_"
+                    f"{reputation_label}"
+                )
+                row = {
+                    "scenario": scenario,
+                    "communication_structure": communication_structure,
+                    "network_topology": network_topology,
+                    "communication_noise": 0.0,
+                    "use_reputation": use_reputation,
+                    "malicious_agent_ratio": malicious_agent_ratio,
+                    "lying_probability": lying_probability,
+                    "lie_magnitude": lie_magnitude,
+                }
+                if use_reputation:
+                    row["reputation_strength"] = 1.0
+                scenario_rows.append(row)
 
     output_dir, summary_rows, timestep_rows = run_scenarios(
         "sq2_reputation_coordination",
@@ -67,14 +60,34 @@ def main(steps=400, seeds=None, save_dir=None):
         output_root,
     )
 
+    # Summary metrics describe overall performance and inequality.
     summary_aggregate = aggregate_rows(
         summary_rows,
-        ["scenario", "communication_structure", "use_reputation"],
+        [
+            "scenario",
+            "communication_structure",
+            "network_topology",
+            "use_reputation",
+            "malicious_agent_ratio",
+            "lying_probability",
+            "lie_magnitude",
+        ],
         SUMMARY_METRICS,
     )
+
+    # Timestep metrics describe arm-choice distribution over time. These are the
+    # main SQ2 outputs for herding versus diversification.
     timestep_aggregate = aggregate_timestep_rows(
         timestep_rows,
-        ["scenario", "communication_structure", "use_reputation"],
+        [
+            "scenario",
+            "communication_structure",
+            "network_topology",
+            "use_reputation",
+            "malicious_agent_ratio",
+            "lying_probability",
+            "lie_magnitude",
+        ],
         TIMESTEP_METRICS,
     )
 
@@ -86,6 +99,7 @@ def main(steps=400, seeds=None, save_dir=None):
         os.path.join(output_dir, "sq2_timestep_coordination.csv"),
         timestep_aggregate,
     )
+    plot_sq2_summary(output_dir, summary_aggregate, timestep_aggregate)
 
 
 if __name__ == "__main__":

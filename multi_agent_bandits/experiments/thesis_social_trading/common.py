@@ -10,6 +10,9 @@ from multi_agent_bandits.core.reward_sharing import linear_share
 from multi_agent_bandits.social_trading.config_social_trading import SocialTradingConfig
 from multi_agent_bandits.social_trading.sweep_runner import SweepRunner
 
+PACKAGE_DIR = os.path.dirname(__file__)
+DEFAULT_RESULTS_ROOT = os.path.join(PACKAGE_DIR, "results", "thesis_social_trading")
+
 
 SUMMARY_METRICS = [
     "average_cumulative_return",
@@ -43,8 +46,16 @@ def build_base_config(steps):
         n_agents=8,
         arms=[
             Arm(mean=0.8, sd=1.0),
+            Arm(mean=0.9, sd=1.0),
+            Arm(mean=1.0, sd=1.0),
             Arm(mean=1.1, sd=1.0),
+            Arm(mean=1.2, sd=1.0),
+            Arm(mean=1.3, sd=1.0),
+            Arm(mean=1.4, sd=1.0),
             Arm(mean=1.5, sd=1.0),
+            Arm(mean=1.6, sd=1.0),
+            Arm(mean=1.7, sd=1.0),
+            Arm(mean=1.8, sd=1.0),
             Arm(mean=1.9, sd=1.0),
         ],
         timesteps=steps,

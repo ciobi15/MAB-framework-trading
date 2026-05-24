@@ -1,19 +1,26 @@
 import os
 
 from multi_agent_bandits.experiments.thesis_social_trading.common import (
+    DEFAULT_RESULTS_ROOT,
     SUMMARY_METRICS,
     aggregate_rows,
     expand_grid,
     run_scenarios,
     write_csv,
 )
+from multi_agent_bandits.experiments.thesis_social_trading.plotting import plot_sq1_summary
 
 
-def main(steps=400, seeds=None, save_dir=None):
+def main(steps=4000, seeds=None, save_dir=None):
+    # SQ1 asks how communication structure, network topology, and message noise
+    # affect the average and spread of cumulative returns across agents.
     seeds = list(seeds or [1, 7, 21, 42, 84])
-    output_root = save_dir or "results/thesis_social_trading"
+    output_root = save_dir or DEFAULT_RESULTS_ROOT
 
     scenario_rows = []
+
+    # Clean global communication baseline: all agents can observe messages from
+    # all other agents, with no communication noise and no reputation.
     scenario_rows.append(
         {
             "scenario": "sq1_global_baseline",
@@ -27,6 +34,9 @@ def main(steps=400, seeds=None, save_dir=None):
         }
     )
 
+    # Local communication sweep: agents only observe messages from their network
+    # neighbors. This tests whether the network shape changes performance, and
+    # whether local communication remains useful as message noise increases.
     for row in expand_grid(
         {
             "network_topology": ["ring_lattice", "random_graph", "fully_connected"],
@@ -45,6 +55,8 @@ def main(steps=400, seeds=None, save_dir=None):
             }
         )
 
+    # Noisy global communication: isolates the effect of noise when everyone can
+    # hear everyone else. Noise distorts reported outcome values.
     for noise_level in [0.15, 0.3, 0.6]:
         scenario_rows.append(
             {
@@ -67,6 +79,8 @@ def main(steps=400, seeds=None, save_dir=None):
         output_root,
     )
 
+    # Aggregate repeated seeds by experimental condition, so the output table
+    # reports means and standard deviations for each SQ1 setting.
     group_keys = [
         "scenario",
         "communication_structure",
@@ -78,6 +92,7 @@ def main(steps=400, seeds=None, save_dir=None):
         os.path.join(output_dir, "sq1_summary_by_condition.csv"),
         summary_aggregate,
     )
+    plot_sq1_summary(output_dir, summary_aggregate)
 
 
 if __name__ == "__main__":
