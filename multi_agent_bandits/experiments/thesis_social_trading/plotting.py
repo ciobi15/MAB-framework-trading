@@ -2,8 +2,11 @@ import math
 import os
 import re
 
-import matplotlib.pyplot as plt
+import matplotlib
 
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 COLORS = {
     "navy": "#0f2d52",

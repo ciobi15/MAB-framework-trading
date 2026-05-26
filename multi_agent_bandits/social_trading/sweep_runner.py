@@ -49,6 +49,9 @@ class SweepRunner:
 
         if not canonical.get("use_reputation", self.base_config.use_reputation):
             canonical["reputation_strength"] = 0.0
+            canonical["reputation_learning_rate"] = 0.0
+        elif "reputation_learning_rate" not in canonical:
+            canonical["reputation_learning_rate"] = self.base_config.reputation_learning_rate
 
         communication_structure = canonical.get(
             "communication_structure",

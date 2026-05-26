@@ -65,6 +65,7 @@ def build_base_config(steps):
         communication_noise=0.0,
         use_reputation=False,
         reputation_strength=1.0,
+        reputation_learning_rate=0.25,
         social_influence_strength=0.6,
         ucb_exploration=2.0,
         crowding_penalty=0.3,

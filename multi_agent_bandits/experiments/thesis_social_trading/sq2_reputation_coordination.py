@@ -50,6 +50,7 @@ def main(steps=4000, seeds=None, save_dir=None):
                 }
                 if use_reputation:
                     row["reputation_strength"] = 1.0
+                    row["reputation_learning_rate"] = 0.25
                 scenario_rows.append(row)
 
     output_dir, summary_rows, timestep_rows = run_scenarios(
@@ -68,6 +69,7 @@ def main(steps=4000, seeds=None, save_dir=None):
             "communication_structure",
             "network_topology",
             "use_reputation",
+            "reputation_learning_rate",
             "malicious_agent_ratio",
             "lying_probability",
             "lie_magnitude",
@@ -84,6 +86,7 @@ def main(steps=4000, seeds=None, save_dir=None):
             "communication_structure",
             "network_topology",
             "use_reputation",
+            "reputation_learning_rate",
             "malicious_agent_ratio",
             "lying_probability",
             "lie_magnitude",
