@@ -8,6 +8,12 @@ This folder contains dedicated experiment runners for the thesis questions:
 - `sq2_reputation_coordination.py`
   Studies how the reputation mechanism changes coordination outcomes over time,
   using herding, diversification, and malicious-agent robustness metrics.
+- `sq2_reputation_learning_rate_sweep.py`
+  Sweeps the reputation learning rate to test whether conservative or reactive
+  trust updates work better under clean and malicious communication.
+- `sq1_ring_noise_robustness.py`
+  Runs a focused ring-lattice noise check with more seeds to test whether the
+  moderate-noise improvement in SQ1 is robust.
 - `run_all.py`
   Runs the two thesis experiment sets.
 
@@ -15,6 +21,18 @@ Outputs are written to `results/thesis_social_trading/` by default.
 
 Each experiment output folder includes:
 
-- `sweep_summary.csv`: one row per scenario and seed.
+- `sweep_summary.csv`: one row per scenario and seed, including reputation parameters such as strength and learning rate.
 - `sweep_timestep_metrics.csv`: one row per scenario, seed, and timestep with aggregate coordination metrics.
 - `sweep_agent_timestep_details.csv`: one row per scenario, seed, timestep, and agent with choices, rewards, cumulative rewards, reputation, lie flags, and malicious-agent flags.
+
+Run the reputation learning-rate sweep with:
+
+```bash
+mab run thesis_social_trading.sq2_reputation_learning_rate_sweep --steps 4000 --save multi_agent_bandits/experiments/thesis_social_trading/results/thesis_social_trading
+```
+
+Run the ring-lattice noise robustness check with:
+
+```bash
+mab run thesis_social_trading.sq1_ring_noise_robustness --steps 4000 --save multi_agent_bandits/experiments/thesis_social_trading/results/thesis_social_trading
+```

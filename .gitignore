@@ -205,3 +205,13 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Local/generated experiment outputs
+results/
+multi_agent_bandits/experiments/thesis_social_trading/results/
+multi_agent_bandits/experiments/thesis_social_trading/thesis_results/
+
+# Generated figures and local OS metadata
+*.png
+.DS_Store
+*.csv

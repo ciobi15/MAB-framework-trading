@@ -54,6 +54,7 @@ class SocialTradingSimulation:
             self.config.n_agents,
             enabled=self.config.use_reputation,
             strength=self.config.reputation_strength,
+            learning_rate=self.config.reputation_learning_rate,
         )
         self.network = self._build_network()
 

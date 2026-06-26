@@ -123,11 +123,7 @@ class SocialTradingAgent(Agent):
         truthful_value is the agent's internal estimate. reported_value is what
         other agents see, and may be distorted when deception is enabled.
         """
-        truthful_value = self.estimate_payoff(
-            arm_idx,
-            social_signal=social_signal,
-            observed_counts=observed_counts,
-        )
+        truthful_value = self.values[arm_idx]
 
         lied = random.random() < self.lying_probability
         distortion = self.lie_magnitude if lied else 0.0

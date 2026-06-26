@@ -29,6 +29,7 @@ class SocialTradingConfig:
     communication_noise: float = 0.0
     use_reputation: bool = False
     reputation_strength: float = 1.0
+    reputation_learning_rate: float = 0.25
     social_influence_strength: float = 0.5
     ucb_exploration: float = 2.0
     crowding_penalty: float = 0.25
@@ -67,6 +68,8 @@ class SocialTradingConfig:
             raise ValueError("communication_noise must be non-negative.")
         if self.reputation_strength < 0:
             raise ValueError("reputation_strength must be non-negative.")
+        if self.reputation_learning_rate < 0:
+            raise ValueError("reputation_learning_rate must be non-negative.")
         if self.social_influence_strength < 0:
             raise ValueError("social_influence_strength must be non-negative.")
         if self.ucb_exploration < 0:
