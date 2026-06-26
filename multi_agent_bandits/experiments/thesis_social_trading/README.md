@@ -11,6 +11,9 @@ This folder contains dedicated experiment runners for the thesis questions:
 - `sq2_reputation_learning_rate_sweep.py`
   Sweeps the reputation learning rate to test whether conservative or reactive
   trust updates work better under clean and malicious communication.
+- `sq1_ring_noise_robustness.py`
+  Runs a focused ring-lattice noise check with more seeds to test whether the
+  moderate-noise improvement in SQ1 is robust.
 - `run_all.py`
   Runs the two thesis experiment sets.
 
@@ -26,4 +29,10 @@ Run the reputation learning-rate sweep with:
 
 ```bash
 mab run thesis_social_trading.sq2_reputation_learning_rate_sweep --steps 4000 --save multi_agent_bandits/experiments/thesis_social_trading/results/thesis_social_trading
+```
+
+Run the ring-lattice noise robustness check with:
+
+```bash
+mab run thesis_social_trading.sq1_ring_noise_robustness --steps 4000 --save multi_agent_bandits/experiments/thesis_social_trading/results/thesis_social_trading
 ```

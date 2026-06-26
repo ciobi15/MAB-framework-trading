@@ -339,7 +339,7 @@ def _plot_sq1_local_heatmaps(output_dir, summary_rows):
         ("cumulative_return_std_mean", "Return spread across agents"),
     ]
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.8))
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5.4))
     for ax, (metric_key, title) in zip(axes, metrics):
         matrix = []
         for topology in local_topologies:
@@ -370,15 +370,26 @@ def _plot_sq1_local_heatmaps(output_dir, summary_rows):
                         f"{value:.1f}",
                         ha="center",
                         va="center",
-                        color="black",
+                        color=_heatmap_text_color(image, value),
                         fontsize=9,
+                        fontweight="semibold",
                     )
         fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
 
-    fig.suptitle("SQ1: Local Communication Landscape", y=1.02, fontsize=14)
-    fig.tight_layout()
-    fig.savefig(os.path.join(output_dir, "sq1_local_heatmaps.png"), dpi=220)
+    fig.suptitle("SQ1: Local Communication Landscape", y=0.97, fontsize=14)
+    fig.tight_layout(rect=(0, 0, 1, 0.92))
+    fig.savefig(
+        os.path.join(output_dir, "sq1_local_heatmaps.png"),
+        dpi=220,
+        bbox_inches="tight",
+    )
     plt.close(fig)
+
+
+def _heatmap_text_color(image, value):
+    red, green, blue, _ = image.cmap(image.norm(value))
+    luminance = 0.299 * red + 0.587 * green + 0.114 * blue
+    return "white" if luminance < 0.55 else "black"
 
 
 def _plot_sq1_noise_penalty(output_dir, summary_rows):
@@ -423,7 +434,7 @@ def _plot_sq2_coordination_overview(output_dir, timestep_rows):
         ("distinct_arms_chosen_mean", "Distinct arms chosen"),
         ("group_reward_mean", "Group reward"),
     ]
-    fig, axes = plt.subplots(2, 2, figsize=(13, 8), sharex=True)
+    fig, axes = plt.subplots(2, 2, figsize=(13.5, 9.2), sharex=True)
     axes_flat = [axes[0][0], axes[0][1], axes[1][0], axes[1][1]]
 
     for (metric_key, title), axis in zip(metric_layout, axes_flat):
@@ -434,15 +445,32 @@ def _plot_sq2_coordination_overview(output_dir, timestep_rows):
     axes[0][0].set_ylabel("Coordination")
     axes[1][0].set_ylabel("Diversity")
     handles, labels = axes[0][0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper center", ncol=4, frameon=False)
-    fig.suptitle("SQ2: Reputation, Malicious Agents, and Coordination", y=0.98, fontsize=14)
-    fig.tight_layout(rect=[0, 0, 1, 0.91])
-    fig.savefig(os.path.join(output_dir, "sq2_coordination_trajectories.png"), dpi=220)
+    fig.suptitle(
+        "SQ2: Reputation, Malicious Agents, and Coordination",
+        y=0.985,
+        fontsize=14,
+    )
+    fig.legend(
+        handles,
+        labels,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 0.945),
+        ncol=4,
+        frameon=False,
+        columnspacing=1.6,
+        handlelength=2.8,
+    )
+    fig.tight_layout(rect=[0, 0, 1, 0.88])
+    fig.savefig(
+        os.path.join(output_dir, "sq2_coordination_trajectories.png"),
+        dpi=220,
+        bbox_inches="tight",
+    )
     plt.close(fig)
 
 
 def _plot_sq2_herding_diversification_map(output_dir, summary_rows):
-    fig, ax = plt.subplots(figsize=(9.5, 5.8))
+    fig, ax = plt.subplots(figsize=(9.5, 6.2))
     for row in sorted(summary_rows, key=_sq2_sort_key):
         x_value = row.get("final_choice_entropy_mean")
         y_value = row.get("final_most_popular_arm_share_mean")
@@ -457,20 +485,25 @@ def _plot_sq2_herding_diversification_map(output_dir, summary_rows):
             edgecolors="white",
             linewidths=1.2,
             marker="s" if row["use_reputation"] else "o",
-        )
-        ax.text(
-            x_value + 0.01,
-            y_value + 0.005,
-            _sq2_label(row),
-            fontsize=8.5,
-            color=COLORS["navy"],
+            label=_sq2_label(row),
         )
 
     ax.set_title("SQ2: Herding vs Diversification End State")
     ax.set_xlabel("Final choice entropy")
     ax.set_ylabel("Final most popular arm share")
-    fig.tight_layout()
-    fig.savefig(os.path.join(output_dir, "sq2_herding_diversification_map.png"), dpi=220)
+    ax.margins(x=0.10, y=0.12)
+    ax.legend(
+        frameon=False,
+        ncol=2,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.14),
+    )
+    fig.tight_layout(rect=(0, 0.08, 1, 1))
+    fig.savefig(
+        os.path.join(output_dir, "sq2_herding_diversification_map.png"),
+        dpi=220,
+        bbox_inches="tight",
+    )
     plt.close(fig)
 
 
@@ -487,9 +520,9 @@ def _plot_sq2_single_metric_trajectories(
     ax.set_title(title)
     ax.set_xlabel("Timestep")
     ax.set_ylabel(ylabel)
-    ax.legend(frameon=False, ncol=2)
-    fig.tight_layout()
-    fig.savefig(os.path.join(output_dir, filename), dpi=220)
+    ax.legend(frameon=False, ncol=4, loc="upper center", bbox_to_anchor=(0.5, -0.16))
+    fig.tight_layout(rect=(0, 0.10, 1, 1))
+    fig.savefig(os.path.join(output_dir, filename), dpi=220, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -499,7 +532,7 @@ def _plot_sq2_clean_malicious_panels(output_dir, timestep_rows, metric_key):
         "choice_entropy_mean": ("Choice Entropy", "Choice entropy"),
     }
     title_metric, ylabel = title_by_metric[metric_key]
-    fig, axes = plt.subplots(1, 2, figsize=(13, 5.2), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5.8), sharey=True)
     for ax, malicious, panel_title in [
         (axes[0], False, "Clean communication"),
         (axes[1], True, "Malicious agents"),
@@ -513,11 +546,18 @@ def _plot_sq2_clean_malicious_panels(output_dir, timestep_rows, metric_key):
     handles, labels = axes[0].get_legend_handles_labels()
     if not handles:
         handles, labels = axes[1].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper center", ncol=4, frameon=False)
+    fig.legend(
+        handles,
+        labels,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 0.92),
+        ncol=4,
+        frameon=False,
+    )
     fig.suptitle(f"SQ2: {title_metric} Under Clean vs Malicious Conditions", y=0.99)
-    fig.tight_layout(rect=[0, 0, 1, 0.90])
+    fig.tight_layout(rect=[0, 0, 1, 0.82])
     filename = f"sq2_{_safe_name(title_metric)}_clean_vs_malicious.png"
-    fig.savefig(os.path.join(output_dir, filename), dpi=220)
+    fig.savefig(os.path.join(output_dir, filename), dpi=220, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -544,19 +584,26 @@ def _plot_sq2_malicious_penalty(output_dir, summary_rows):
     if not rows:
         return
 
-    fig, ax = plt.subplots(figsize=(8.8, 5))
+    fig, ax = plt.subplots(figsize=(8.8, 5.4))
+    labels = [row["label"] for row in rows]
+    values = [row["penalty"] for row in rows]
     ax.bar(
-        [row["label"] for row in rows],
-        [row["penalty"] for row in rows],
+        labels,
+        values,
         color=[row["color"] for row in rows],
         alpha=0.9,
     )
     ax.axhline(0, color=COLORS["slate"], linewidth=1)
     ax.set_title("SQ2: Return Penalty From Malicious Agents")
     ax.set_ylabel("Clean return minus malicious return")
-    ax.tick_params(axis="x", rotation=20)
+    ax.tick_params(axis="x", rotation=15)
+    _annotate_vertical_bars(ax, values)
     fig.tight_layout()
-    fig.savefig(os.path.join(output_dir, "sq2_malicious_return_penalty.png"), dpi=220)
+    fig.savefig(
+        os.path.join(output_dir, "sq2_malicious_return_penalty.png"),
+        dpi=220,
+        bbox_inches="tight",
+    )
     plt.close(fig)
 
 
@@ -583,19 +630,26 @@ def _plot_sq2_reputation_gain(output_dir, summary_rows):
     if not rows:
         return
 
-    fig, ax = plt.subplots(figsize=(8.8, 5))
+    fig, ax = plt.subplots(figsize=(8.8, 5.4))
+    labels = [row["label"] for row in rows]
+    values = [row["gain"] for row in rows]
     ax.bar(
-        [row["label"] for row in rows],
-        [row["gain"] for row in rows],
+        labels,
+        values,
         color=[row["color"] for row in rows],
         alpha=0.9,
     )
     ax.axhline(0, color=COLORS["slate"], linewidth=1)
     ax.set_title("SQ2: Reputation Gain in Return")
     ax.set_ylabel("Reputation return minus no-reputation return")
-    ax.tick_params(axis="x", rotation=20)
+    ax.tick_params(axis="x", rotation=15)
+    _annotate_vertical_bars(ax, values)
     fig.tight_layout()
-    fig.savefig(os.path.join(output_dir, "sq2_reputation_return_gain.png"), dpi=220)
+    fig.savefig(
+        os.path.join(output_dir, "sq2_reputation_return_gain.png"),
+        dpi=220,
+        bbox_inches="tight",
+    )
     plt.close(fig)
 
 
@@ -609,6 +663,7 @@ def _draw_sq2_metric_lines(axis, timestep_rows, metric_key):
         y_values = [row[metric_key] for row in rows]
         std_key = metric_key.replace("_mean", "_std")
         y_std = [row.get(std_key, 0.0) or 0.0 for row in rows]
+        x_values, y_values, y_std = _smooth_long_series(x_values, y_values, y_std)
         representative = rows[0]
         axis.plot(
             x_values,
@@ -625,6 +680,29 @@ def _draw_sq2_metric_lines(axis, timestep_rows, metric_key):
             color=_sq2_color(representative),
             alpha=0.08,
         )
+
+
+def _smooth_long_series(x_values, y_values, y_std):
+    if len(y_values) < 250:
+        return x_values, y_values, y_std
+    window_size = min(75, max(15, len(y_values) // 80))
+    return (
+        _rolling_mean(x_values, window_size),
+        _rolling_mean(y_values, window_size),
+        _rolling_mean(y_std, window_size),
+    )
+
+
+def _rolling_mean(values, window_size):
+    smoothed = []
+    running_sum = 0.0
+    for idx, value in enumerate(values):
+        running_sum += value
+        if idx >= window_size:
+            running_sum -= values[idx - window_size]
+        divisor = min(idx + 1, window_size)
+        smoothed.append(running_sum / divisor)
+    return smoothed
 
 
 def _plot_scatter(
@@ -700,10 +778,21 @@ def _plot_ranked_bars(
         ax.invert_yaxis()
     ax.set_title(title)
     ax.set_xlabel(xlabel)
-    for idx, value in enumerate(values):
-        ax.text(value, idx, f" {value:.2f}", va="center", color=COLORS["navy"], fontsize=8.5)
+    max_extent = max(value + error for value, error in zip(values, errors))
+    min_value = min(values)
+    padding = max((max_extent - min_value) * 0.08, max_extent * 0.03, 0.05)
+    ax.set_xlim(left=min(0, min_value - padding), right=max_extent + padding)
+    for idx, (value, error) in enumerate(zip(values, errors)):
+        ax.text(
+            value + error + padding * 0.15,
+            idx,
+            _format_metric_value(value),
+            va="center",
+            color=COLORS["navy"],
+            fontsize=8.5,
+        )
     fig.tight_layout()
-    fig.savefig(os.path.join(output_dir, filename), dpi=220)
+    fig.savefig(os.path.join(output_dir, filename), dpi=220, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -753,10 +842,10 @@ def _sq1_color(row):
 
 
 def _sq2_label(row):
-    structure = row["communication_structure"].title()
-    rep = _rep_text(row["use_reputation"])
-    deception = _deception_text(_is_malicious(row))
-    return f"{structure}, {rep}, {deception}"
+    structure = "Global" if row["communication_structure"] == "global" else "Local"
+    deception = "malicious" if _is_malicious(row) else "clean"
+    reputation = "+rep" if row["use_reputation"] else "-rep"
+    return f"{structure} {deception} {reputation}"
 
 
 def _sq2_color(row):
@@ -811,7 +900,7 @@ def _sq2_sort_key(row):
 
 
 def _rep_text(use_reputation):
-    return "reputation" if use_reputation else "no reputation"
+    return "+rep" if use_reputation else "-rep"
 
 
 def _deception_text(malicious):
@@ -824,6 +913,39 @@ def _is_malicious(row):
 
 def _is_number(value):
     return isinstance(value, (int, float)) and not math.isnan(value)
+
+
+def _format_metric_value(value):
+    if abs(value) >= 100:
+        return f"{value:.0f}"
+    if abs(value) >= 10:
+        return f"{value:.1f}"
+    return f"{value:.3f}"
+
+
+def _annotate_vertical_bars(axis, values):
+    if not values:
+        return
+    low, high = axis.get_ylim()
+    value_range = high - low
+    offset = value_range * 0.025
+    for idx, value in enumerate(values):
+        if value >= 0:
+            y_position = value + offset
+            va = "bottom"
+        else:
+            y_position = value - offset
+            va = "top"
+        axis.text(
+            idx,
+            y_position,
+            _format_metric_value(value),
+            ha="center",
+            va=va,
+            color=COLORS["navy"],
+            fontsize=9,
+        )
+    axis.margins(y=0.16)
 
 
 def _safe_name(text):

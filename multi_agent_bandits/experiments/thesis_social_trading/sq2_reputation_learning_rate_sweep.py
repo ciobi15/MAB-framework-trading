@@ -149,7 +149,7 @@ def _plot_learning_rate_metric(
     ylabel,
     filename,
 ):
-    fig, ax = plt.subplots(figsize=(10.5, 5.5))
+    fig, ax = plt.subplots(figsize=(10.5, 5.8))
     for label, color, series_rows in _learning_rate_series(rows):
         x_values = [row["reputation_learning_rate"] for row in series_rows]
         y_values = [row[metric_key] for row in series_rows]
@@ -166,9 +166,9 @@ def _plot_learning_rate_metric(
     ax.set_title(title)
     ax.set_xlabel("Reputation learning rate")
     ax.set_ylabel(ylabel)
-    ax.legend(frameon=False, ncol=2)
-    fig.tight_layout()
-    fig.savefig(os.path.join(output_dir, filename), dpi=220)
+    ax.legend(frameon=False, ncol=4, loc="upper center", bbox_to_anchor=(0.5, -0.16))
+    fig.tight_layout(rect=(0, 0.10, 1, 1))
+    fig.savefig(os.path.join(output_dir, filename), dpi=220, bbox_inches="tight")
     plt.close(fig)
 
 
